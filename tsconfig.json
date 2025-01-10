@@ -1,0 +1,9 @@
+{
+    "compilerOptions": {
+      "target": "ES6",
+      "outDir": "../js", // Saída será em assets/js
+      "strict": true
+    },
+    "include": ["./*.ts"] // Busca arquivos TypeScript na pasta atual
+  }
+  
