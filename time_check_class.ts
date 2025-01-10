@@ -9,7 +9,7 @@ interface Aula {
     {
       id: 1,
       titulo_aula: "Introdução ao JavaScript",
-      url_youtube: "https://www.youtube.com/embed/dQw4w9WgXcQ"
+      url_youtube: "https://www.youtube.com/embed/tgbNymZ7vqY"
     },
     {
       id: 2,
@@ -49,6 +49,7 @@ interface Aula {
   
       const checkbox = document.getElementById(`checkbox-${aula.id}`) as HTMLInputElement;
       const button = document.getElementById(`btn-${aula.id}`) as HTMLButtonElement;
+      const video = document.getElementById(`video-${aula.id}`) as HTMLIFrameElement;
   
       // Habilitar o botão ao marcar o checkbox
       checkbox.addEventListener("change", () => {
@@ -58,6 +59,29 @@ interface Aula {
       // Redirecionar ao clicar no botão
       button.addEventListener("click", () => {
         window.location.href = "http://127.0.0.1:5500/aulas.html";
+      });
+  
+      // Adicionar evento para verificar o tempo do vídeo
+      video.addEventListener("load", () => {
+        const iframe = video.contentWindow?.document.querySelector("video");
+  
+        if (iframe) {
+          const videoElement = iframe as HTMLVideoElement;
+  
+          // Verificar o tempo do vídeo a cada segundo
+          const checkTimeRemaining = () => {
+            const remainingTime = videoElement.duration - videoElement.currentTime;
+  
+            // Se faltar 15 segundos ou menos, marcar o checkbox
+            if (remainingTime <= 15) {
+              checkbox.checked = true;
+              videoElement.removeEventListener("timeupdate", checkTimeRemaining); // Remover o evento após marcar
+            }
+          };
+  
+          // Iniciar a verificação do tempo
+          videoElement.addEventListener("timeupdate", checkTimeRemaining);
+        }
       });
     });
   };
