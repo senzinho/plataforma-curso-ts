@@ -23,62 +23,93 @@ var aulasTestData = [
     }
 ];
 
-// Função para buscar uma aula pelo ID (substituindo find)
-function buscarAulaPorId(aulas: { id: number; titulo_aula: string; url_youtube: string; }[], aulaId: number) {
-    for (var i = 0; i < aulas.length; i++) {
-        if (aulas[i].id === aulaId) {
-            return aulas[i];
+var currentAulaIndex = 0; // Índice da aula atual
+var aulasAssistidas: { id: number; titulo_aula: string }[] = []; // Lista de aulas concluídas
+
+// Função para renderizar a aula atual
+function renderizarAulaAtual() {
+    var container = document.getElementById("aulas-container");
+    container.innerHTML = ""; // Limpa o conteúdo anterior
+
+    var aula = aulasTestData[currentAulaIndex];
+
+    var aulaDiv = document.createElement("div");
+    aulaDiv.className = "aula";
+    aulaDiv.innerHTML = `
+        <div class="aula-title">${aula.titulo_aula}</div>
+        <iframe 
+          src="${aula.url_youtube}" 
+          frameborder="0" 
+          allowfullscreen 
+          id="video-${aula.id}" 
+          style="width: 100%; height: 500px; max-width: 800px; border-radius: 8px;">
+        </iframe>
+        <div class="checkbox-container">
+          <label>
+            <input type="checkbox" id="checkbox-${aula.id}">
+            Aula concluída
+          </label>
+          <button id="btn-next" disabled>Ir para Próxima Aula</button>
+        </div>
+    `;
+    container.appendChild(aulaDiv);
+
+    var checkbox = document.getElementById(`checkbox-${aula.id}`) as HTMLInputElement;
+    var button = document.getElementById("btn-next") as HTMLButtonElement;
+
+    // Habilitar o botão ao marcar o checkbox
+    checkbox.addEventListener("change", function () {
+        button.disabled = !checkbox.checked;
+    });
+
+    // Ir para a próxima aula
+    button.addEventListener("click", function () {
+        // Adiciona a aula à lista de aulas assistidas
+        aulasAssistidas.push({ id: aula.id, titulo_aula: aula.titulo_aula });
+        atualizarListaAulasAssistidas();
+
+        // Vai para a próxima aula, se houver
+        if (currentAulaIndex < aulasTestData.length - 1) {
+            currentAulaIndex++;
+            renderizarAulaAtual();
+        } else {
+            alert("Parabéns! Você concluiu todas as aulas.");
         }
-    }
-    return null; // Retorna null se não encontrar
+    });
 }
 
-// Função para renderizar uma aula por vez
-var renderizarAula = function (aulaId: number) {
-    var container = document.getElementById("aulas-container");
-    container.innerHTML = ""; // Limpar o container antes de renderizar a próxima aula
+// Função para atualizar a lista de aulas assistidas
+function atualizarListaAulasAssistidas() {
+    var listaContainer = document.getElementById("aulas-assistidas");
+    listaContainer.innerHTML = ""; // Limpa a lista anterior
 
-    var aula = buscarAulaPorId(aulasTestData, aulaId);
-    if (aula) {
-        var aulaDiv = document.createElement("div");
-        aulaDiv.className = "aula";
-        aulaDiv.innerHTML = `
-            <div class="aula-title">${aula.titulo_aula}</div>
-            <iframe 
-              src="${aula.url_youtube}" 
-              frameborder="0" 
-              allowfullscreen 
-              id="video-${aula.id}"></iframe>
-            <div class="checkbox-container">
-              <label>
-                <input type="checkbox" id="checkbox-${aula.id}">
-                Aula concluída
-              </label>
-              <button id="btn-${aula.id}" disabled>Ir para Próxima Aula</button>
-            </div>
-          `;
-        container.appendChild(aulaDiv);
+    aulasAssistidas.forEach(function (aula) {
+        var aulaItem = document.createElement("div");
+        aulaItem.className = "aula-assistida";
+        aulaItem.innerHTML = `
+            <input type="checkbox" checked disabled>
+            <a href="#" onclick="voltarParaAula(${aula.id})">${aula.titulo_aula}</a>
+        `;
+        listaContainer.appendChild(aulaItem);
+    });
+}
 
-        var checkbox = document.getElementById(`checkbox-${aula.id}`) as HTMLInputElement;
-        var button = document.getElementById(`btn-${aula.id}`) as HTMLButtonElement;
-
-        // Habilitar o botão ao marcar o checkbox
-        checkbox.addEventListener("change", function () {
-            button.disabled = !checkbox.checked;
-        });
-
-        // Redirecionar para a próxima aula ao clicar no botão
-        button.addEventListener("click", function () {
-            var nextAulaId = aula.id + 1; // Determina o próximo ID
-            var nextAula = buscarAulaPorId(aulasTestData, nextAulaId);
-            if (nextAula) {
-                renderizarAula(nextAulaId); // Renderiza a próxima aula
-            } else {
-                alert("Você concluiu todas as aulas!");
-            }
-        });
+// Função para voltar para uma aula específica sem usar findIndex
+function voltarParaAula(aulaId: number) {
+    var index = -1; // Índice inicial, caso a aula não seja encontrada
+    for (let i = 0; i < aulasTestData.length; i++) {
+        if (aulasTestData[i].id === aulaId) {
+            index = i;
+            break;
+        }
     }
-};
 
-// Renderiza a primeira aula ao carregar a página
-renderizarAula(1);
+    if (index !== -1) {
+        currentAulaIndex = index;
+        renderizarAulaAtual();
+    } else {
+        console.error("Aula não encontrada.");
+    }
+}
+// Chamar a função para renderizar a aula inicial
+renderizarAulaAtual();

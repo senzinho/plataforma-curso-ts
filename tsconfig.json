@@ -1,6 +1,6 @@
 {
     "compilerOptions": {
-      "target": "ES6",
+      "target": "ES2015",
       "outDir": "../js", // Saída será em assets/js
       "strict": true
     },
