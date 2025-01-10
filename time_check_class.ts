@@ -1,115 +1,108 @@
+// Interface para o tipo de dados das aulas
 interface Aula {
     id: number;
     titulo_aula: string;
     url_youtube: string;
   }
   
-// Dados simulados de exemplo
-var aulasTestData = [
-    {
-        id: 1,
-        titulo_aula: "Introdução ao JavaScript",
-        url_youtube: "https://www.youtube.com/embed/tgbNymZ7vqY"
-    },
-    {
-        id: 2,
-        titulo_aula: "Manipulação de DOM com JavaScript",
-        url_youtube: "https://www.youtube.com/embed/tgbNymZ7vqY"
-    },
-    {
-        id: 3,
-        titulo_aula: "Funções e Eventos em JavaScript",
-        url_youtube: "https://www.youtube.com/embed/3JZ_D3ELwOQ"
+  // Dados simulados de exemplo
+  const aulasTestData: Aula[] = [
+    { id: 1, titulo_aula: "Introdução ao JavaScript", url_youtube: "https://www.youtube.com/embed/tgbNymZ7vqY" },
+    { id: 2, titulo_aula: "Manipulação de DOM com JavaScript", url_youtube: "https://www.youtube.com/embed/tgbNymZ7vqY" },
+    { id: 3, titulo_aula: "Funções e Eventos em JavaScript", url_youtube: "https://www.youtube.com/embed/3JZ_D3ELwOQ" },
+  ];
+  
+  let aulasConcluidas: number[] = [];
+  
+  // Implementação das funções auxiliares
+  function find<T>(array: T[], predicate: (item: T) => boolean): T | undefined {
+    for (const item of array) {
+      if (predicate(item)) {
+        return item;
+      }
     }
-];
-
-var currentAulaIndex = 0; // Índice da aula atual
-var aulasAssistidas: { id: number; titulo_aula: string }[] = []; // Lista de aulas concluídas
-
-// Função para renderizar a aula atual
-function renderizarAulaAtual() {
-    var container = document.getElementById("aulas-container");
-    container.innerHTML = ""; // Limpa o conteúdo anterior
-
-    var aula = aulasTestData[currentAulaIndex];
-
-    var aulaDiv = document.createElement("div");
-    aulaDiv.className = "aula";
-    aulaDiv.innerHTML = `
-        <div class="aula-title">${aula.titulo_aula}</div>
-        <iframe 
-          src="${aula.url_youtube}" 
-          frameborder="0" 
-          allowfullscreen 
-          id="video-${aula.id}" 
-          style="width: 100%; height: 500px; max-width: 800px; border-radius: 8px;">
-        </iframe>
-        <div class="checkbox-container">
-          <label>
-            <input type="checkbox" id="checkbox-${aula.id}">
-            Aula concluída
-          </label>
-          <button id="btn-next" disabled>Ir para Próxima Aula</button>
-        </div>
+    return undefined;
+  }
+  
+  function includes<T>(array: T[], value: T): boolean {
+    return array.some((item) => item === value);
+  }
+  
+  function findIndex<T>(array: T[], predicate: (item: T) => boolean): number {
+    for (let i = 0; i < array.length; i++) {
+      if (predicate(array[i])) {
+        return i;
+      }
+    }
+    return -1;
+  }
+  
+  // Renderizar a aula atual
+  function renderizarAulaAtual(aulaId: number) {
+    const aula = find(aulasTestData, (a) => a.id === aulaId);
+    if (!aula) return;
+  
+    const aulaContainer = document.getElementById("aula-atual");
+    if (!aulaContainer) return;
+  
+    aulaContainer.innerHTML = `
+      <h2>${aula.titulo_aula}</h2>
+      <iframe src="${aula.url_youtube}" frameborder="0" allowfullscreen></iframe>
+      <label>
+          <input type="checkbox" id="checkbox-${aula.id}">
+          Aula concluída
+      </label>
+      <button id="proxima-aula-btn" disabled>Ir para Próxima Aula</button>
     `;
-    container.appendChild(aulaDiv);
-
-    var checkbox = document.getElementById(`checkbox-${aula.id}`) as HTMLInputElement;
-    var button = document.getElementById("btn-next") as HTMLButtonElement;
-
-    // Habilitar o botão ao marcar o checkbox
-    checkbox.addEventListener("change", function () {
-        button.disabled = !checkbox.checked;
+  
+    const checkbox = document.getElementById(`checkbox-${aula.id}`) as HTMLInputElement;
+    const button = document.getElementById("proxima-aula-btn") as HTMLButtonElement;
+  
+    checkbox.checked = includes(aulasConcluidas, aula.id);
+  
+    checkbox.addEventListener("change", () => {
+      button.disabled = !checkbox.checked;
+      if (checkbox.checked && !includes(aulasConcluidas, aula.id)) {
+        aulasConcluidas.push(aula.id);
+        atualizarListaLateral();
+      }
     });
-
-    // Ir para a próxima aula
-    button.addEventListener("click", function () {
-        // Adiciona a aula à lista de aulas assistidas
-        aulasAssistidas.push({ id: aula.id, titulo_aula: aula.titulo_aula });
-        atualizarListaAulasAssistidas();
-
-        // Vai para a próxima aula, se houver
-        if (currentAulaIndex < aulasTestData.length - 1) {
-            currentAulaIndex++;
-            renderizarAulaAtual();
-        } else {
-            alert("Parabéns! Você concluiu todas as aulas.");
-        }
+  
+    button.addEventListener("click", () => {
+      const index = findIndex(aulasTestData, (a) => a.id === aulaId);
+      if (index >= 0 && index < aulasTestData.length - 1) {
+        renderizarAulaAtual(aulasTestData[index + 1].id);
+      }
     });
-}
-
-// Função para atualizar a lista de aulas assistidas
-function atualizarListaAulasAssistidas() {
-    var listaContainer = document.getElementById("aulas-assistidas");
-    listaContainer.innerHTML = ""; // Limpa a lista anterior
-
-    aulasAssistidas.forEach(function (aula) {
-        var aulaItem = document.createElement("div");
-        aulaItem.className = "aula-assistida";
-        aulaItem.innerHTML = `
-            <input type="checkbox" checked disabled>
-            <a href="#" onclick="voltarParaAula(${aula.id})">${aula.titulo_aula}</a>
-        `;
-        listaContainer.appendChild(aulaItem);
+  }
+  
+  // Atualizar lista lateral de aulas concluídas
+  function atualizarListaLateral() {
+    const listaContainer = document.getElementById("aulas-concluidas");
+    if (!listaContainer) return;
+  
+    listaContainer.innerHTML = "";
+  
+    aulasTestData.forEach((aula) => {
+      const aulaItem = document.createElement("div");
+      aulaItem.className = "aula-list-item";
+  
+      aulaItem.innerHTML = `
+        <input type="checkbox" ${includes(aulasConcluidas, aula.id) ? "checked" : ""} disabled>
+        <a href="javascript:void(0)" class="${includes(aulasConcluidas, aula.id) ? "concluida" : "pendente"}">${aula.titulo_aula}</a>
+      `;
+  
+      aulaItem.querySelector("a")?.addEventListener("click", () => {
+        renderizarAulaAtual(aula.id);
+      });
+  
+      listaContainer.appendChild(aulaItem);
     });
-}
-
-// Função para voltar para uma aula específica sem usar findIndex
-function voltarParaAula(aulaId: number) {
-    var index = -1; // Índice inicial, caso a aula não seja encontrada
-    for (let i = 0; i < aulasTestData.length; i++) {
-        if (aulasTestData[i].id === aulaId) {
-            index = i;
-            break;
-        }
-    }
-
-    if (index !== -1) {
-        currentAulaIndex = index;
-        renderizarAulaAtual();
-    } else {
-        console.error("Aula não encontrada.");
-    }
-}
-// Chamar a função para renderizar a aula inicial
-renderizarAulaAtual();
+  }
+  
+  // Inicializar ao carregar o DOM
+  document.addEventListener("DOMContentLoaded", () => {
+    renderizarAulaAtual(1);
+    atualizarListaLateral();
+  });
+  
